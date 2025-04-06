@@ -1,12 +1,15 @@
 'use client';
 
-import React, { useCallback, useMemo } from 'react'; // Import useMemo
-import { PKINode, PKIEdge } from '@/types/pki'; // Import PKIEdge
+import React, { useCallback, useMemo } from 'react';
+import { PKINode, PKIEdge, CAType } from '@/types/pki'; // Import CAType
 
 interface SidebarProps {
   selectedNode: PKINode | null;
-  nodes: PKINode[]; // Add nodes prop
-  edges: PKIEdge[]; // Add edges prop
+  nodes: PKINode[];
+  edges: PKIEdge[];
+  mode: 'view' | 'configure'; // Add mode prop
+  addNode: (type: CAType) => void; // Add addNode function prop
+  deleteNode: (nodeId: string) => void; // Add deleteNode function prop
 }
 
 // --- Pricing Constants (Simplified for Mockup) ---
@@ -14,7 +17,7 @@ const ROOT_CA_COST_MONTHLY = 199.00;
 const ISSUING_CA_COST_MONTHLY = 500.00;
 // ---
 
-export default function Sidebar({ selectedNode, nodes, edges }: SidebarProps) {
+export default function Sidebar({ selectedNode, nodes, edges, mode, addNode, deleteNode }: SidebarProps) { // Destructure new props
   // Export function
   const handleExport = useCallback(() => {
     if (!nodes || !edges) return;
@@ -71,7 +74,9 @@ export default function Sidebar({ selectedNode, nodes, edges }: SidebarProps) {
   return (
     // Add dark mode styles for background, border, text
     <aside className="w-full md:w-1/3 lg:w-1/4 h-full border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-md p-4 overflow-y-auto hidden md:block flex flex-col"> {/* Added flex flex-col */}
-      <h2 className="text-lg font-semibold mb-4 border-b pb-2 border-gray-200 dark:border-gray-600 dark:text-white">CA Details</h2>
+      <h2 className="text-lg font-semibold mb-4 border-b pb-2 border-gray-200 dark:border-gray-600 dark:text-white">
+        {mode === 'configure' ? 'Configure Hierarchy' : 'CA Details'} {/* Change title based on mode */}
+      </h2>
 
       {/* Move Export button here to be always visible */}
       <div className="mb-4">
@@ -84,18 +89,37 @@ export default function Sidebar({ selectedNode, nodes, edges }: SidebarProps) {
         </button>
       </div>
 
-      {/* Estimated Cost Section */}
-      <div className="mb-4 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+      {/* Configuration Buttons (Only in Configure Mode) */}
+      {mode === 'configure' && (
+        <div className="mb-4 space-y-2">
+           <button
+             onClick={() => addNode('Root')}
+             className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 transition-colors text-sm"
+           >
+             Add Root CA
+           </button>
+           <button
+             onClick={() => addNode('Intermediate')}
+             className="w-full px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 dark:bg-purple-600 dark:hover:bg-purple-700 transition-colors text-sm"
+           >
+             Add Issuing CA
+           </button>
+           {/* Add button for Leaf/Bridge if needed */}
+        </div>
+      )}
+
+      {/* Estimated Cost Section (Only in Configure Mode) */}
+      {mode === 'configure' && (
+        <div className="mb-4 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
         <h3 className="text-sm font-semibold mb-1 text-gray-700 dark:text-gray-300">Estimated Monthly Cost (Mockup)</h3>
         <p className="text-xl font-bold text-gray-900 dark:text-white">
           AUD ${estimatedCost}
         </p>
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
           Based on {nodes.filter(n => n.data.type === 'Root').length} Root CA(s) and {nodes.filter(n => n.data.type === 'Intermediate' || n.data.type === 'Bridge').length} Issuing CA(s). Other add-ons not included.
-        </p> {/* Correct closing tag for cost breakdown */}
-      </div> {/* Correct closing tag for cost section div */}
-      {/* Removed stray </button> tag */}
-
+        </p>
+        </div>
+      )}
       {/* Conditional rendering for selected node details */}
       <div className="flex-grow overflow-y-auto"> {/* Allow details to scroll if needed */}
         {selectedNode ? (
@@ -135,7 +159,18 @@ export default function Sidebar({ selectedNode, nodes, edges }: SidebarProps) {
                   </span>
               </div>
             )}
-            {/* Export button moved outside this block */}
+            
+            {/* Delete Button (Only visible in Configure mode) */}
+            {mode === 'configure' && (
+              <div className="mt-4">
+                <button
+                  onClick={() => deleteNode(selectedNode.id)}
+                  className="w-full px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 transition-colors text-sm focus:outline-none focus:ring-2 focus:ring-red-500 dark:focus:ring-red-400"
+                >
+                  Delete CA
+                </button>
+              </div>
+            )}
           </div>
         ) : (
           <div className="text-center text-gray-500 dark:text-gray-400 mt-10">
