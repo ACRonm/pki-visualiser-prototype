@@ -1,116 +1,72 @@
-prompt.md
+# PKI Visualization Integration Task
 
-Generate a **Next.js (App Router)** page that visualizes multiple public key infrastructure (PKI) hierarchies using mock data. Use **Reagraph** for dynamic, interactive graph rendering, and **Tailwind CSS** for styling.
+## Context
 
-The app should support selecting between different trust structures using a dropdown menu or segmented buttons.
+We have developed a Next.js prototype for visualizing PKI (Public Key Infrastructure) hierarchies. The prototype allows users to view different certificate authority structures, see their relationships, and explore details of each node. The prototype is in the `/app` directory of this workspace.
 
-Each option loads a different mock PKI layout:
-1. **Single Root CA Tree**
-2. **Cross-Signed Intermediate**
-3. **Bridged CAs**
-4. **Disconnected Islands**
+## Current Features
 
-### Page Layout
+The prototype currently includes:
 
-- **Top Section:**
-  - Dropdown or segmented buttons labeled: "Single Root", "Cross-Signed", "Bridge CA", "Disconnected"
-  - Selecting one updates the visualized graph
+1. **PKI Structure Visualization**
+   - Interactive graph display using React Flow (previously `@xyflow/react`)
+   - Support for 4 different mock PKI structures (Single Root, Hierarchical, Cross-Signed, Bridge)
+   - Custom node styling based on CA type (Root, Intermediate, Bridge, Leaf)
+   - Node selection and details panel
+   
+2. **User Interface**
+   - Structure selector for switching between different PKI hierarchies
+   - Sidebar displaying detailed information about selected nodes
+   - Export functionality to download the current view as JSON
+   - Responsive layout for different screen sizes
 
-- **Main Section:**
-  - Left area: Reagraph graph canvas (full-width on mobile, two-thirds width on desktop)
-  - Right sidebar (on desktop) or collapsible panel (on mobile): shows metadata for the selected CA
+3. **Mock Data**
+   - Currently using static mock data in `/app/src/data/mockPkiData.ts`
 
-- **Graph Features:**
-  - Nodes represent CAs (Root, Intermediate, Bridge, Leaf)
-  - Edges represent relationships: Signed, Cross-Signed, or Bridge
-  - Color code nodes:
-    - Root: `bg-blue-500`
-    - Intermediate: `bg-purple-500`
-    - Bridge: `bg-yellow-400`
-    - Leaf: `bg-green-500`
-  - Edge styles:
-    - Solid for Signed
-    - Dashed for Cross-Signed
-    - Dotted for Bridge
-  - Highlight trust chains when a node is clicked
-  - Allow zoom/pan
-  - Fit-to-screen button
+## Integration Task
 
-- **Sidebar Features:**
-  - Show CA metadata:
-    - Name, Type, Validity, Issuer, SHA-1 Fingerprint
-  - Edge type info (e.g., "Signed by Root CA")
-  - Button to export trust chain as JSON
-  - Use Tailwind utility classes like `p-4`, `rounded-2xl`, `shadow-md`, `text-sm`, etc.
-  - Hide or collapse sidebar on mobile view
+We need to integrate the VIEW mode of this prototype into an existing React application built with:
+- React + Vite
+- React-Bootstrap for UI components (instead of Tailwind CSS)
+- Connection to a real database for PKI data (instead of mock data)
 
-- **Responsiveness:**
-  - Mobile-first layout
-  - Sidebar becomes collapsible drawer or bottom sheet on mobile
+## Primary Requirements
 
-### Mock Data Examples:
+1. **React-Bootstrap Migration**
+   - Convert the existing Tailwind CSS styles to React-Bootstrap components
+   - Replace custom components with equivalent React-Bootstrap components
+   - Maintain the visual appearance and functionality of the original
 
-Use TypeScript interfaces:
-```ts
-export type CAType = 'Root' | 'Intermediate' | 'Leaf' | 'Bridge';
-export type EdgeType = 'Signed' | 'Cross-Signed' | 'Bridge';
+2. **View-Only Mode**
+   - Remove the configure mode entirely from the integration
+   - Focus only on the view functionality (displaying predefined PKI structures)
 
-export interface CANode {
-  id: string;
-  label: string;
-  type: CAType;
-  validTo?: string;
-  revoked?: boolean;
-}
+3. **Real Data Integration**
+   - Develop a plan to replace the mock data with real PKI data from a database
+   - Create appropriate data fetching mechanisms
+   - Ensure the data structure matches what the visualization expects
 
-export interface CAEdge {
-  source: string;
-  target: string;
-  type: EdgeType;
-}
+## Components to Adapt
 
-#### 1. Single Root
-nodes = [
-  { id: 'root', label: 'Root CA', type: 'Root' },
-  { id: 'inter1', label: 'Intermediate A', type: 'Intermediate' },
-  { id: 'leaf', label: 'Leaf Cert', type: 'Leaf' },
-];
-edges = [
-  { source: 'root', target: 'inter1', type: 'Signed' },
-  { source: 'inter1', target: 'leaf', type: 'Signed' },
-];
+Key components to adapt from the prototype include:
 
+- `PKIGraphClient.tsx` - Main visualization component
+- `Sidebar.tsx` - Details panel for selected nodes
+- `StructureSelector.tsx` - Buttons for switching between structures
+- `CustomNodes/BaseCANode.tsx` - Custom node rendering
+- `data/mockPkiData.ts` - Current mock data (to be replaced)
+- `types/pki.ts` - TypeScript definitions
 
-#### 2. Cross-Signed Intermediate
-nodes = [
-  { id: 'rootA', label: 'Root A', type: 'Root' },
-  { id: 'rootB', label: 'Root B', type: 'Root' },
-  { id: 'cross', label: 'Intermediate X (Cross-Signed)', type: 'Intermediate' },
-];
-edges = [
-  { source: 'rootA', target: 'cross', type: 'Signed' },
-  { source: 'rootB', target: 'cross', type: 'Cross-Signed' },
-];
+## Integration Guide Notes
 
-#### 3. Bridged CAs
-nodes = [
-  { id: 'rootA', label: 'Root A', type: 'Root' },
-  { id: 'rootB', label: 'Root B', type: 'Root' },
-  { id: 'bridge', label: 'Bridge CA', type: 'Bridge' },
-];
-edges = [
-  { source: 'rootA', target: 'bridge', type: 'Signed' },
-  { source: 'rootB', target: 'bridge', type: 'Signed' },
-];
+1. The core visualization library `@xyflow/react` should be installed in the target project
+2. React-Bootstrap components should replace Tailwind utility classes
+3. Structure and functionality should remain consistent while adapting to the new styling approach
+4. The final integration should support API-based data fetching instead of static mock data
 
-#### 4. Disconnected Islands
-nodes = [
-  { id: 'rootA', label: 'Root A', type: 'Root' },
-  { id: 'rootB', label: 'Root B', type: 'Root' },
-  { id: 'leafA', label: 'Leaf A', type: 'Leaf' },
-  { id: 'leafB', label: 'Leaf B', type: 'Leaf' },
-];
-edges = [
-  { source: 'rootA', target: 'leafA', type: 'Signed' },
-  { source: 'rootB', target: 'leafB', type: 'Signed' },
-];
+## Deliverables
+
+1. Adapted React components using React-Bootstrap
+2. Plan for integrating real data sources 
+3. Documentation of any changes made to the original component structure
+4. Any required TypeScript type definitions
